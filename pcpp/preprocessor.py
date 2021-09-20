@@ -52,11 +52,12 @@ class FileInclusionTime(object):
 # ------------------------------------------------------------------
 
 class Preprocessor(PreprocessorHooks):    
-    def __init__(self,lexer=None):
+    def __init__(self, lexer=None, fix_indentation=False):
         super(Preprocessor, self).__init__()
         if lexer is None:
             lexer = default_lexer()
         self.lexer = lexer
+        self.fix_indentation = fix_indentation
         self.evaluator = Evaluator(self.lexer)
         self.macros = { }
         self.path = []           # list of -I formal search paths for includes
@@ -562,6 +563,7 @@ class Preprocessor(PreprocessorHooks):
         #print("*** EXPAND MACROS in", "".join([t.value for t in tokens]), "expanding_from=", expanding_from)
         #print(tokens)
         #print([(t.value, t.expanded_from) for t in tokens])
+        last_indent = None
         while i < len(tokens):
             t = tokens[i]
             if self.linemacrodepth == 0:
@@ -574,6 +576,8 @@ class Preprocessor(PreprocessorHooks):
                     if m.arglist is None:
                         # A simple macro
                         rep = [copy.copy(_x) for _x in m.value]
+                        if self.fix_indentation:
+                            self._fix_indentation_in(rep, last_indent)
                         ex = self.expand_macros(rep, expanding_from + [t.value])
                         #print("\nExpanding macro", m, "\ninto", ex, "\nreplacing", tokens[i:i+1])
                         for e in ex:
@@ -622,6 +626,8 @@ class Preprocessor(PreprocessorHooks):
                                         
                                 # Get macro replacement text
                                 rep = self.macro_expand_args(m,args)
+                                if self.fix_indentation:
+                                    self._fix_indentation_in(rep, last_indent)
                                 ex = self.expand_macros(rep, expanding_from + [t.value])
                                 for e in ex:
                                     e.source = t.source
@@ -652,12 +658,27 @@ class Preprocessor(PreprocessorHooks):
                     t.type = self.t_INTEGER
                     t.value = self.t_INTEGER_TYPE(self.countermacro)
                     self.countermacro += 1
-                
+            elif t.value == '\n':
+                new_indent = ''
+                _i = i + 1
+                while _i < len(tokens) and tokens[_i].value.strip(' \t') == '':
+                    new_indent += tokens[_i].value
+                    _i += 1
+                last_indent = self.tokenize(new_indent)[0] if new_indent else None
             i += 1
             self.linemacrodepth = self.linemacrodepth - 1
             if self.linemacrodepth == 0:
                 self.linemacro = 0
         return tokens
+
+    def _fix_indentation_in(self, tokens, last_indent):
+        "Replaces line continuations with proper Python indentation."
+        rep = [self.tokenize('\n')[0]]
+        if last_indent:
+            rep.append(last_indent)
+        for i, tok in enumerate(tokens):
+            if tok.type == self.t_LINECONT:
+                tokens[i:i+1] = rep
 
     # ----------------------------------------------------------------------    
     # evalexpr()
