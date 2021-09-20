@@ -1,4 +1,4 @@
-A C99 preprocessor written in pure Python
+A C99 preprocessor (fork) written in pure Python
 =========================================
 .. role:: c(code)
    :language: c
@@ -6,6 +6,9 @@ A C99 preprocessor written in pure Python
 .. |travis| image:: https://travis-ci.org/ned14/pcpp.svg?branch=master
     :align: middle
     :target: https://travis-ci.org/ned14/pcpp
+
+Purpose of fork - to support indentation and maybe other Python-specific things for creating
+PWCP (Python With C Preprocessor).
 
 \(C) 2018-2021 Niall Douglas http://www.nedproductions.biz/ and (C) 2007-2020 David Beazley http://www.dabeaz.com/
 
