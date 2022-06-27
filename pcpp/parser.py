@@ -109,7 +109,7 @@ t_CPP_RSHIFTEQUAL = r'>>='
 
 
 # Identifier
-t_CPP_ID = r'[A-Za-z_][\w_]*'
+t_CPP_ID = r'[^\W\d]\w*'
 
 # Integer literal
 def CPP_INTEGER(t):
