@@ -13,7 +13,7 @@ from __future__ import generators, print_function, absolute_import, division
 
 import sys, re, os
 
-in_production = 1  # Set to 0 if editing pcpp implementation!
+in_production = 1  # Set to 0 if editing pypp implementation!
 
 # Some Python 3 compatibility shims
 if sys.version_info.major < 3:

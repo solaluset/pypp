@@ -1,4 +1,4 @@
 *.pyc
 build/*
 dist/*
-pcpp.egg-info/*
+pypp.egg-info/*

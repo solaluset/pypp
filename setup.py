@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from setuptools import setup, find_packages
-import os, pcpp
+import os, pypp
 
 here = os.path.abspath(os.path.dirname(__file__))
 
@@ -10,17 +10,17 @@ with open(os.path.join(here, 'README.rst')) as f:
     long_description = f.read()
     
 setup(
-    name='pcpp',
-    version=pcpp.version,
+    name='pypp',
+    version=pypp.version,
     description='A C99 preprocessor written in pure Python',
     long_description=long_description,
     author='Niall Douglas and David Beazley',
     url='https://github.com/ned14/pcpp',
-    packages=['pcpp', 'pcpp/ply/ply'],
-    package_data={'pcpp' : ['../LICENSE.txt']},
+    packages=['pypp', 'pypp/ply/ply'],
+    package_data={'pypp' : ['../LICENSE.txt']},
     test_suite='tests',
     entry_points={
-        'console_scripts': [ 'pcpp=pcpp:main' ]
+        'console_scripts': [ 'pypp=pypp:main' ]
     },
     options={'bdist_wheel':{'universal':True}},
     license='BSD',

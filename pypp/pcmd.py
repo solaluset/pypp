@@ -8,7 +8,7 @@ from __future__ import generators, print_function, absolute_import, division
 import sys, argparse, traceback, os, copy, io, re
 if __name__ == '__main__' and __package__ is None:
     sys.path.append( os.path.dirname( os.path.dirname( os.path.abspath(__file__) ) ) )
-from pcpp.preprocessor import Preprocessor, OutputDirective, Action
+from pypp.preprocessor import Preprocessor, OutputDirective, Action
 
 version='1.30'
 
@@ -30,13 +30,13 @@ class CmdPreprocessor(Preprocessor):
     def __init__(self, argv):
         if len(argv) < 2:
             argv = [argv[0], '--help']
-        argp = argparse.ArgumentParser(prog='pcpp',
+        argp = argparse.ArgumentParser(prog='pypp',
             description=
     '''A pure universal Python C (pre-)preprocessor implementation very useful for
     pre-preprocessing header only C++ libraries into single file includes and
     other such build or packaging stage malarky.''',
             epilog=
-    '''Note that so pcpp can stand in for other preprocessor tooling, it
+    '''Note that so pypp can stand in for other preprocessor tooling, it
     ignores any arguments it does not understand.''')
         argp.add_argument('inputs', metavar = 'input', default = [sys.stdin], nargs = '*', action = FileAction, help = 'Files to preprocess (use \'-\' for stdin)')
         argp.add_argument('-o', dest = 'output', metavar = 'path', type = argparse.FileType('wt'), default=sys.stdout, nargs = '?', help = 'Output to a file instead of stdout')
@@ -60,7 +60,7 @@ class CmdPreprocessor(Preprocessor):
         argp.add_argument('--assume-input-encoding', dest = 'assume_input_encoding', metavar = '<encoding>', default = None, nargs = 1, help = 'The text encoding to assume inputs are in')
         argp.add_argument('--output-encoding', dest = 'output_encoding', metavar = '<encoding>', default = None, nargs = 1, help = 'The text encoding to use when writing files')
         argp.add_argument('--write-bom', dest = 'write_bom', action = 'store_true', help = 'Prefix any output with a Unicode BOM')
-        argp.add_argument('--version', action='version', version='pcpp ' + version)
+        argp.add_argument('--version', action='version', version='pypp ' + version)
         args = argp.parse_known_args(argv[1:])
         #print(args)
         for arg in args[1]:

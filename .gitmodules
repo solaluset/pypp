@@ -1,4 +1,4 @@
-[submodule "pcpp/ply"]
+[submodule "pypp/ply"]
 	path = pypp/ply
 	url = https://github.com/ned14/ply.git
 	branch = master
