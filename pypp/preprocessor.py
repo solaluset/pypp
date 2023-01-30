@@ -206,14 +206,7 @@ class Preprocessor(PreprocessorHooks):
         else:
             self.t_COMMENT1 = tok.type
 
-        self.lexer.input("// comment")
-        tok = self.lexer.token()
-        if not tok or tok.value != "// comment":
-            print("Couldn't determine comment type")
-        else:
-            self.t_COMMENT2 = tok.type
-            
-        self.t_COMMENT = (self.t_COMMENT1, self.t_COMMENT2)
+        self.t_COMMENT = (self.t_COMMENT1,)
 
         # Check for other characters used by the preprocessor
         chars = [ '<','>','#','##','\\','(',')',',','.']
@@ -848,8 +841,6 @@ class Preprocessor(PreprocessorHooks):
                     if not self.on_comment(tok):
                         if tok.type == self.t_COMMENT1:
                             tok.value = ' '
-                        elif tok.type == self.t_COMMENT2:
-                            tok.value = '\n'
                         tok.type = 'CPP_WS'
             # Skip over whitespace
             for i,tok in enumerate(x):
