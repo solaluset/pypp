@@ -52,7 +52,7 @@ class FileInclusionTime(object):
 # ------------------------------------------------------------------
 
 class Preprocessor(PreprocessorHooks):    
-    def __init__(self, lexer=None, fix_indentation=False):
+    def __init__(self, lexer=None, fix_indentation=True):
         super(Preprocessor, self).__init__()
         if lexer is None:
             lexer = default_lexer()
