@@ -80,7 +80,15 @@ class Preprocessor(PreprocessorHooks):
         tm = time.localtime()
         self.define("__DATE__ \"%s\"" % time.strftime("%b %d %Y",tm))
         self.define("__TIME__ \"%s\"" % time.strftime("%H:%M:%S",tm))
-        self.define("__PCPP__ 1")
+        self.define("__PYPP__ 1")
+        self.define("PY_MAJOR_VERSION %s" % sys.version_info.major)
+        self.define("PY_MINOR_VERSION %s" % sys.version_info.minor)
+        self.define("PY_MICRO_VERSION %s" % sys.version_info.micro)
+        self.define("PY_RELEASE_LEVEL %s" % ((sys.hexversion >> 4) & 0xF))
+        self.define("PY_RELEASE_SERIAL %s" % sys.version_info.serial)
+        self.define("PY_VERSION_HEX %s" % sys.hexversion)
+        self.define("PY_VERSION \"%s\"" % sys.version.split(" ", 1)[0])
+
         self.expand_linemacro = True
         self.expand_filemacro = True
         self.expand_countermacro = True
