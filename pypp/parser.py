@@ -27,7 +27,7 @@ else:
 # -----------------------------------------------------------------------------
 
 tokens = (
-   'CPP_ID','CPP_INTEGER', 'CPP_FLOAT', 'CPP_STRING', 'CPP_CHAR', 'CPP_WS', 'CPP_LINECONT', 'CPP_COMMENT1',
+   'CPP_ID','CPP_INTEGER', 'CPP_FLOAT', 'CPP_STRING', 'CPP_WS', 'CPP_LINECONT', 'CPP_COMMENT1',
    'CPP_POUND','CPP_DPOUND', 'CPP_PLUS', 'CPP_MINUS', 'CPP_STAR', 'CPP_FSLASH', 'CPP_PERCENT', 'CPP_BAR',
    'CPP_AMPERSAND', 'CPP_TILDE', 'CPP_HAT', 'CPP_LESS', 'CPP_GREATER', 'CPP_EQUAL', 'CPP_EXCLAMATION',
    'CPP_QUESTION', 'CPP_LPAREN', 'CPP_RPAREN', 'CPP_LBRACKET', 'CPP_RBRACKET', 'CPP_LCURLY', 'CPP_RCURLY',
@@ -36,7 +36,9 @@ tokens = (
    'CPP_DEREFERENCE', 'CPP_MINUSEQUAL', 'CPP_MINUSMINUS', 'CPP_LSHIFT', 'CPP_LESSEQUAL', 'CPP_RSHIFT',
    'CPP_GREATEREQUAL', 'CPP_LOGICALOR', 'CPP_OREQUAL', 'CPP_LOGICALAND', 'CPP_ANDEQUAL', 'CPP_EQUALITY',
    'CPP_INEQUALITY', 'CPP_XOREQUAL', 'CPP_MULTIPLYEQUAL', 'CPP_DIVIDEEQUAL', 'CPP_PLUSEQUAL', 'CPP_PLUSPLUS',
-   'CPP_PERCENTEQUAL', 'CPP_LSHIFTEQUAL', 'CPP_RSHIFTEQUAL'
+   'CPP_PERCENTEQUAL', 'CPP_LSHIFTEQUAL', 'CPP_RSHIFTEQUAL',
+
+   'PY_TRIPLE_STRING',
 )
 
 literals = "+-*/%|&~^<>=!?()[]{}.,;:\\\'\""
@@ -53,7 +55,7 @@ def t_CPP_LINECONT(t):
     t.value = t.value[1:-1]
     t.lexer.lineno += 1
     return t
-_string_literal_linecont_pat = re.compile(r'\\[ \t]*\n')
+_string_literal_linecont_pat = re.compile(r'\\\n')
 
 t_CPP_POUND = r'\#'
 t_CPP_DPOUND = r'\#\#'
@@ -121,17 +123,15 @@ t_CPP_INTEGER = CPP_INTEGER
 # Floating literal
 t_CPP_FLOAT = r'((\d+)(\.\d+)(e(\+|-)?(\d+))?|(\d+)e(\+|-)?(\d+))([lL]|[fF])?'
 
-# String literal
+# String literals
+def t_PY_TRIPLE_STRING(t):
+    r'((?P<quotes>"""|\'\'\')([^\\]|\\(.|\n))*?(?P=quotes))'
+    return t_CPP_STRING(t)
+
 def t_CPP_STRING(t):
-    r'\"([^\\\n]|(\\(.|\n)))*?\"'
+    r'(?P<quote>"|\')([^\\\n]|(\\(.|\n)))*?(?P=quote)'
     t.value, subs_made = _string_literal_linecont_pat.subn('', t.value)
     t.lexer.lineno += subs_made + t.value.count("\n")
-    return t
-
-# Character constant 'c' or L'c'
-def t_CPP_CHAR(t):
-    r'(L)?\'([^\\\n]|(\\(.|\n)))*?\''
-    t.lexer.lineno += t.value.count("\n")
     return t
 
 # Comment

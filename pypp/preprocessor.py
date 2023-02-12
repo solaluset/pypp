@@ -142,21 +142,32 @@ class Preprocessor(PreprocessorHooks):
             self.t_INTEGER = tok.type
             self.t_INTEGER_TYPE = type(tok.value)
 
-        # Determine the token type for character
-        self.lexer.input("'a'")
-        tok = self.lexer.token()
-        if not tok or tok.value != "'a'":
-            print("Couldn't determine character type")
-        else:
-            self.t_CHAR = tok.type
-            
-        # Determine the token type for strings enclosed in double quotes
+        # Determine the token type for strings
         self.lexer.input("\"filename\"")
-        tok = self.lexer.token()
-        if not tok or tok.value != "\"filename\"":
-            print("Couldn't determine string type")
+        tok1 = self.lexer.token()
+        self.lexer.input("'filename'")
+        tok2 = self.lexer.token()
+        if not tok1 or tok1.value != "\"filename\"":
+            print("Couldn't determine type of string with double quotes")
+        elif not tok2 or tok2.value != "'filename'":
+            print("Couldn't determine type of string with single quotes")
+        elif tok1.type != tok2.type:
+            print("Types of strings with double and single quotes are not equal")
         else:
-            self.t_STRING = tok.type
+            self.t_STRING = tok1.type
+
+        self.lexer.input('"""\ntest\n"""')
+        tok1 = self.lexer.token()
+        self.lexer.input("'''\ntest\n'''")
+        tok2 = self.lexer.token()
+        if not tok1 or tok1.value != '"""\ntest\n"""':
+            print("Couldn't determine type of triple-quoted string with double quotes")
+        elif not tok2 or tok2.value != "'''\ntest\n'''":
+            print("Couldn't determine type of triple-quoted string with single quotes")
+        elif tok1.type != tok2.type:
+            print("Types of triple-quoted strings with double and single quotes are not equal")
+        else:
+            self.t_TRIPLE_STRING = tok1.type
 
         # Determine the token type for whitespace--if any
         self.lexer.input("  ")
