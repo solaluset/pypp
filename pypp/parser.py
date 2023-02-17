@@ -38,7 +38,8 @@ tokens = (
    'CPP_INEQUALITY', 'CPP_XOREQUAL', 'CPP_MULTIPLYEQUAL', 'CPP_DIVIDEEQUAL', 'CPP_PLUSEQUAL', 'CPP_PLUSPLUS',
    'CPP_PERCENTEQUAL', 'CPP_LSHIFTEQUAL', 'CPP_RSHIFTEQUAL',
 
-   'PY_TRIPLE_STRING',
+   'CPP_UNTERMINATED_COMMENT',
+   'PY_TRIPLE_STRING', 'PY_UNTERMINATED_TRIPLE_STRING',
 )
 
 literals = "+-*/%|&~^<>=!?()[]{}.,;:\\\'\""
@@ -128,6 +129,10 @@ def t_PY_TRIPLE_STRING(t):
     r'((?P<quotes>"""|\'\'\')([^\\]|\\(.|\n))*?(?P=quotes))'
     return t_CPP_STRING(t)
 
+def t_PY_UNTERMINATED_TRIPLE_STRING(t):
+    r'("""|\'\'\')'
+    return t
+
 def t_CPP_STRING(t):
     r'(?P<quote>"|\')([^\\\n]|(\\(.|\n)))*?(?P=quote)'
     t.value, subs_made = _string_literal_linecont_pat.subn('', t.value)
@@ -139,6 +144,10 @@ def t_CPP_COMMENT1(t):
     r'(/\*(.|\n)*?\*/)'
     ncr = t.value.count("\n")
     t.lexer.lineno += ncr
+    return t
+
+def t_CPP_UNTERMINATED_COMMENT(t):
+    r'(/\*)'
     return t
 
 def t_error(t):

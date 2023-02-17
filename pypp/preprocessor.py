@@ -227,6 +227,22 @@ class Preprocessor(PreprocessorHooks):
 
         self.t_COMMENT = (self.t_COMMENT1,)
 
+        self.lexer.input("/*")
+        tok = self.lexer.token()
+        if not tok or tok.value != "/*":
+            print("Couldn't determine unterminated comment type")
+        else:
+            self.t_UNTERMINATED_COMMENT = tok.type
+
+        self.lexer.input("'''")
+        tok = self.lexer.token()
+        if not tok or tok.value != "'''":
+            print("Couldn't determine type of unterminated triple-quoted string")
+        else:
+            self.t_UNTERMINATED_TRIPLE_STRING = tok.type
+
+        self.t_UNTERMINATED = (self.t_UNTERMINATED_COMMENT, self.t_UNTERMINATED_TRIPLE_STRING)
+
         # Check for other characters used by the preprocessor
         chars = [ '<','>','#','##','\\','(',')',',','.']
         for c in chars:
@@ -854,13 +870,20 @@ class Preprocessor(PreprocessorHooks):
         for x in lines:
             all_whitespace = True
             skip_auto_pragma_once_possible_check = False
-            # Handle comments
+            # Handle comments and unterminated code
             for i,tok in enumerate(x):
                 if tok.type in self.t_COMMENT:
                     if not self.on_comment(tok):
                         if tok.type == self.t_COMMENT1:
                             tok.value = ' '
                         tok.type = 'CPP_WS'
+                elif tok.type in self.t_UNTERMINATED:
+                    msg = "Unterminated "
+                    if tok.type == self.t_UNTERMINATED_COMMENT:
+                        msg += "comment"
+                    elif tok.type == self.t_UNTERMINATED_TRIPLE_STRING:
+                        msg += "triple-quoted string"
+                    self.on_error(tok.source, tok.lineno, msg)
             # Skip over whitespace
             for i,tok in enumerate(x):
                 if tok.type not in self.t_WS and tok.type not in self.t_COMMENT:
