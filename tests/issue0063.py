@@ -4,8 +4,8 @@ import sys
 
 class runner(object):
     def runTest(self):
-        from pcpp import CmdPreprocessor
-        p = CmdPreprocessor(['pcpp'] + self.options + [
+        from pypp import CmdPreprocessor
+        p = CmdPreprocessor(['pypp'] + self.options + [
                              '-o', 'tests/issue0063.i',
                              'tests/issue0063.c'])
         with open('tests/issue0063.i', 'rt') as ih:

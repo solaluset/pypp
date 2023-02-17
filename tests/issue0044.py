@@ -12,11 +12,11 @@ b1
 
 class runner(object):
     def runTest(self):
-        from pcpp import CmdPreprocessor
-        # failure: p = CmdPreprocessor(['pcpp', '--line-directive', '#line',
-        # p = CmdPreprocessor(['pcpp', '--line-directive', 'nothing',
-        # p = CmdPreprocessor(['pcpp', '--line-directive', 'None',
-        p = CmdPreprocessor(['pcpp', '--line-directive', '',
+        from pypp import CmdPreprocessor
+        # failure: p = CmdPreprocessor(['pypp', '--line-directive', '#line',
+        # p = CmdPreprocessor(['pypp', '--line-directive', 'nothing',
+        # p = CmdPreprocessor(['pypp', '--line-directive', 'None',
+        p = CmdPreprocessor(['pypp', '--line-directive', '',
                              '-o', 'tests/issue0044.i',
                              'tests/issue0044.h'])
         with open('tests/issue0044.i', 'rt') as ih:

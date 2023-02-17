@@ -11,7 +11,7 @@ except:
 
 class runner(object):
     def runTest(self):
-        from pcpp import Preprocessor, OutputDirective, Action
+        from pypp import Preprocessor, OutputDirective, Action
         import os, sys
 
         class PassThruPreprocessor(Preprocessor):
@@ -224,7 +224,7 @@ A
 class test10(unittest.TestCase, runner):
     input = r"""#if !defined(__cpp_constexpr)
 #if __cplusplus >= 201402L
-#define __cpp_constexpr 201304  // relaxed constexpr
+#define __cpp_constexpr 201304  /* relaxed constexpr */
 #else
 #define __cpp_constexpr 190000
 #endif
@@ -232,7 +232,7 @@ class test10(unittest.TestCase, runner):
 """
     output = r"""#if !defined(__cpp_constexpr)
 #if __cplusplus >= 201402L
-#define __cpp_constexpr 201304  // relaxed constexpr
+#define __cpp_constexpr 201304  /* relaxed constexpr */
 #else
 #define __cpp_constexpr 190000
 #endif
@@ -243,7 +243,7 @@ class test11(unittest.TestCase, runner):
     input = r"""#define __cpp_constexpr 201304
 #if !defined(__cpp_constexpr)
 #if __cplusplus >= 201402L
-#define __cpp_constexpr 201304  // relaxed constexpr
+#define __cpp_constexpr 201304  /* relaxed constexpr */
 #else
 #define __cpp_constexpr 190000
 #endif
@@ -373,7 +373,7 @@ hi
 
 class test23(unittest.TestCase, runner):
     input = r"""
-#if 0  // Do NOT enable weakened implicit construction for these types
+#if 0  /* Do NOT enable weakened implicit construction for these types */
 hi
 #endif
 """

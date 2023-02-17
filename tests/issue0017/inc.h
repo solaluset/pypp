@@ -3,5 +3,5 @@ inc1
 inc2
 #define __inc_h__
 inc3
-#endif //__inc_h__
+#endif /* __inc_h__ */
 inc4

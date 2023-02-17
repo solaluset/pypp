@@ -7,7 +7,7 @@ except ImportError:
 
 class embedded1(unittest.TestCase):
     def runTest(self):
-        from pcpp import Preprocessor
+        from pypp import Preprocessor
         output = r'''
 
 a

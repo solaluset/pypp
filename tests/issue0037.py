@@ -9,8 +9,8 @@ shouldbe = r'''#line 1 "tests/issue0037/inc.h"
 
 class runner(object):
     def runTest(self):
-        from pcpp import CmdPreprocessor
-        p = CmdPreprocessor(['pcpp', '--time', '--passthru-comments',
+        from pypp import CmdPreprocessor
+        p = CmdPreprocessor(['pypp', '--time', '--passthru-comments',
                              '-o', 'tests/issue0037.i',
                              'tests/issue0037/inc.h'])
         with open('tests/issue0037.i', 'rt') as ih:

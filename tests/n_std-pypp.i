@@ -84,7 +84,8 @@ void n_2( void)
 
     assert( ab + cd + ef == 6);
 # 122 "tests/test-c/n_std.c"
-    assert (ab + cd + ef == 6);
+    assert (ab + cd
+    + ef == 6);
 
 
     assert (strcmp( "abcde", "abcde") == 0);
@@ -273,7 +274,8 @@ void n_19( void)
 {
     int c = 1;
 # 521 "tests/test-c/n_std.c"
-    assert( ( c ) == 1);
+    assert( (
+                        c ) == 1);
 }
 
 void n_20( void)

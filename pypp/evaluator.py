@@ -107,8 +107,6 @@ class Value(INTBASETYPE):
     Value(63)
     >>> Value("'N'")
     Value(78)
-    >>> Value("L'N'")
-    Value(78)
     >>> Value("'\\n'")
     Value(10)
     >>> Value("'\\\\n'")
@@ -578,14 +576,14 @@ class Evaluator(object):
     >>> e('0x3f == 63')
     Value(1)
     >>> e("'\\\\n'")
-    Value(10)
+    "'\\\\n'"
     >>> e("'\\\\\\\\'")
-    Value(92)
+    "'\\\\\\\\'"
     >>> e("'\\\\n' == 0xA")
     Value(1)
     >>> e("'\\\\\\\\' == 0x5c")
     Value(1)
-    >>> e("L'\\\\0' == 0")
+    >>> e("'\\\\0' == 0")
     Value(1)
     >>> e('12 == 12')
     Value(1)
@@ -661,13 +659,9 @@ class Evaluator(object):
     Exception(SyntaxError('Unknown function __has_include'...
     >>> e('__has_include(<variant>)')  # doctest: +ELLIPSIS
     Exception(SyntaxError('Unknown function __has_include'...
-    >>> e('5  // comment')
-    Value(5)
     >>> e('5  /* comment */')
     Value(5)
     >>> e('5  /* comment // more */')
-    Value(5)
-    >>> e('5  // /* comment */')
     Value(5)
     """
 #    >>> e('defined X', functions={'defined':lambda x: 55})

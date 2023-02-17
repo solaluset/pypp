@@ -11,7 +11,7 @@ except:
 
 class runner(object):
     def runTest(self):
-        from pcpp import Preprocessor
+        from pypp import Preprocessor
         import os, sys
 
         start = clock()

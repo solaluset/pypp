@@ -62,10 +62,10 @@ void    n_37( void);
 
 int main( void)
 {
-    //n_1();  trigraphs test removed
+    /* n_1();  trigraphs test removed */
     n_2();
     n_3();
-    //n_4();  digraphs test removed
+    /* n_4();  digraphs test removed */
     n_5();
     n_6();
     n_7();

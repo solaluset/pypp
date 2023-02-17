@@ -14,15 +14,15 @@ shouldbe2 = r'''#line 1 "tests/alternate_input_encodings1_ucs16le.c"
 class runner(object):
     def runTest(self):
         if sys.version_info.major >= 3:
-            from pcpp import CmdPreprocessor
+            from pypp import CmdPreprocessor
             if self.multiple:
-                p = CmdPreprocessor(['pcpp', '-o', 'tests/alternate_input_encodings.c',
+                p = CmdPreprocessor(['pypp', '-o', 'tests/alternate_input_encodings.c',
                                      '--assume-input-encoding', 'utf_16_le',
                                      '--output-encoding', 'utf_8',
                                      'tests/alternate_input_encodings1_ucs16le.c',
                                      'tests/alternate_input_encodings2_ucs16le.c'])
             else:
-                p = CmdPreprocessor(['pcpp', '-o', 'tests/alternate_input_encodings.c',
+                p = CmdPreprocessor(['pypp', '-o', 'tests/alternate_input_encodings.c',
                                      '--assume-input-encoding', 'utf_16_le',
                                      '--output-encoding', 'utf_8',
                                      'tests/alternate_input_encodings1_ucs16le.c'])

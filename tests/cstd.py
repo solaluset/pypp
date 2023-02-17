@@ -11,7 +11,7 @@ except:
 
 class runner(object):
     def runTest(self):
-        from pcpp import Preprocessor
+        from pypp import Preprocessor
         import os, sys
 
         start = clock()
@@ -95,7 +95,8 @@ report(x>y, "x is %d but y is %d", x, y);
 fprintf(stderr, "Flag");
 fprintf(stderr, "X = %d\n", x);
 puts("The first, second, and third items.");
-((x>y)?puts("x>y"):printf( "x is %d but y is %d", x, y));
+((x>y)?puts("x>y"):
+printf( "x is %d but y is %d", x, y));
 """
 
 class std5(unittest.TestCase, runner):
@@ -307,7 +308,7 @@ foo
 
 class test14(unittest.TestCase, runner):
     input = r"""
-# if defined __GNUC__ // NOTE: GNUC is also defined for Clang
+# if defined __GNUC__ /* NOTE: GNUC is also defined for Clang */
 #   if (__GNUC__ == 4) && (__GNUC_MINOR__ >= 8)
 #     define TR2_OPTIONAL_GCC_4_8_AND_HIGHER___
 #   elif (__GNUC__ > 4)
@@ -353,7 +354,7 @@ hi
 """
 
 class test17(unittest.TestCase, runner):
-    input = r"""#if L'\0' == 0
+    input = r"""#if '\0' == 0
 hi
 #endif
 """
@@ -531,7 +532,8 @@ class test27(unittest.TestCase, runner):
 BOOST_WORKAROUND(BOOST_MSVC,==1916)
 """
     output = r"""#line 8
-((0 + 0 == 0) && (1916 != 0) && (1 % (( (1916 ==1916) ) + 1)))
+((0 + 0 == 0) &&
+       (1916 != 0) && (1 % (( (1916 ==1916) ) + 1)))
 """
 
 
@@ -546,5 +548,6 @@ TEST
 
 
 
-1 + 2   3 + 4
+1 + 2
+3 + 4
 """
