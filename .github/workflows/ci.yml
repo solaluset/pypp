@@ -72,4 +72,4 @@ jobs:
       shell: bash
       run:  |
          python setup.py install
-         pcpp --version
+         pypp --version
