@@ -52,12 +52,13 @@ class FileInclusionTime(object):
 # ------------------------------------------------------------------
 
 class Preprocessor(PreprocessorHooks):    
-    def __init__(self, lexer=None, fix_indentation=True):
+    def __init__(self, lexer=None, fix_indentation=True, disabled=False):
         super(Preprocessor, self).__init__()
         if lexer is None:
             lexer = default_lexer()
         self.lexer = lexer
         self.fix_indentation = fix_indentation
+        self.disabled = disabled
         self.evaluator = Evaluator(self.lexer)
         self.macros = { }
         self.path = []           # list of -I formal search paths for includes
@@ -581,7 +582,7 @@ class Preprocessor(PreprocessorHooks):
     # Given a list of tokens, this function performs macro expansion.
     # ----------------------------------------------------------------------
 
-    def expand_macros(self,tokens,expanding_from=[]):
+    def expand_macros(self,tokens,expanding_from=[], passthru_lines=[]):
         """Given a list of tokens, this function performs macro expansion."""
         # Each token needs to track from which macros it has been expanded from to prevent recursion
         for tok in tokens:
@@ -594,6 +595,9 @@ class Preprocessor(PreprocessorHooks):
         last_indent = None
         while i < len(tokens):
             t = tokens[i]
+            if t.lineno in passthru_lines:
+                i += 1
+                continue
             if self.linemacrodepth == 0:
                 self.linemacro = t.lineno
             self.linemacrodepth = self.linemacrodepth + 1
@@ -606,7 +610,7 @@ class Preprocessor(PreprocessorHooks):
                         rep = [copy.copy(_x) for _x in m.value]
                         if self.fix_indentation:
                             self._fix_indentation_in(rep, last_indent)
-                        ex = self.expand_macros(rep, expanding_from + [t.value])
+                        ex = self.expand_macros(rep, expanding_from + [t.value], passthru_lines)
                         #print("\nExpanding macro", m, "\ninto", ex, "\nreplacing", tokens[i:i+1])
                         for e in ex:
                             e.source = t.source
@@ -656,7 +660,7 @@ class Preprocessor(PreprocessorHooks):
                                 rep = self.macro_expand_args(m,args)
                                 if self.fix_indentation:
                                     self._fix_indentation_in(rep, last_indent)
-                                ex = self.expand_macros(rep, expanding_from + [t.value])
+                                ex = self.expand_macros(rep, expanding_from + [t.value], passthru_lines)
                                 for e in ex:
                                     e.source = t.source
                                     e.lineno = t.lineno
@@ -867,7 +871,12 @@ class Preprocessor(PreprocessorHooks):
         include_guard = None
         self.on_potential_include_guard(None)
 
+        passthru_lines = []
+
         for x in lines:
+            if self.disabled:
+                passthru_lines.append(x[0].lineno)
+
             all_whitespace = True
             skip_auto_pragma_once_possible_check = False
             # Handle comments and unterminated code
@@ -915,8 +924,18 @@ class Preprocessor(PreprocessorHooks):
                         name = ""
                         args = []
                         raise OutputDirective(Action.IgnoreAndRemove)
-                        
-                    if name == 'define':
+
+                    if name == 'pragma' and args[0].value == 'pypp':
+                        if args[2].value == "off":
+                            self.disabled = True
+                        elif args[2].value == "on":
+                            self.disabled = False
+                        else:
+                            self.on_error(args[2].source, args[2].lineno, "Unknown pypp directive")
+
+                    if self.disabled:
+                        pass
+                    elif name == 'define':
                         at_front_of_file = False
                         if enable:
                             for tok in self.expand_macros(chunk):
@@ -1119,7 +1138,7 @@ class Preprocessor(PreprocessorHooks):
                     if output_and_expand_line:
                         chunk.extend(x)
                     elif output_unexpanded_line:
-                        for tok in self.expand_macros(chunk):
+                        for tok in self.expand_macros(chunk, passthru_lines=passthru_lines):
                             yield tok
                         chunk = []
                         for tok in x:
@@ -1134,7 +1153,7 @@ class Preprocessor(PreprocessorHooks):
                             i += 1
                     chunk.extend(x)
 
-        for tok in self.expand_macros(chunk):
+        for tok in self.expand_macros(chunk, passthru_lines=passthru_lines):
             yield tok
         chunk = []
         for i in ifstack:
