@@ -14,7 +14,7 @@ from __future__ import generators, print_function, absolute_import, division
 import sys, os, re, codecs, time, copy, traceback
 if __name__ == '__main__' and __package__ is None:
     sys.path.append( os.path.dirname( os.path.dirname( os.path.abspath(__file__) ) ) )
-from pypp.parser import STRING_TYPES, default_lexer, trigraph, Macro, Action, OutputDirective, PreprocessorHooks
+from pypp.parser import STRING_TYPES, default_lexer, Macro, Action, OutputDirective, PreprocessorHooks
 from pypp.evaluator import Evaluator
 
 # Some Python 3 compatibility shims
@@ -834,9 +834,7 @@ class Preprocessor(PreprocessorHooks):
                         rewritten_source = rewritten_source.replace(os.sep, '/')
                     break
 
-        # Replace trigraph sequences
-        t = trigraph(input)
-        lines = self.group_lines(t, rewritten_source)
+        lines = self.group_lines(input, rewritten_source)
 
         if not source:
             source = ""
