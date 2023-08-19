@@ -165,38 +165,6 @@ from ply.lex import LexToken
 sys.path = oldsyspath
 del oldsyspath
 
-# -----------------------------------------------------------------------------
-# trigraph()
-# 
-# Given an input string, this function replaces all trigraph sequences. 
-# The following mapping is used:
-#
-#     ??=    #
-#     ??/    \
-#     ??'    ^
-#     ??(    [
-#     ??)    ]
-#     ??!    |
-#     ??<    {
-#     ??>    }
-#     ??-    ~
-# -----------------------------------------------------------------------------
-
-_trigraph_pat = re.compile(r'''\?\?[=/\'\(\)\!<>\-]''')
-_trigraph_rep = {
-    '=':'#',
-    '/':'\\',
-    "'":'^',
-    '(':'[',
-    ')':']',
-    '!':'|',
-    '<':'{',
-    '>':'}',
-    '-':'~'
-}
-
-def trigraph(input):
-    return _trigraph_pat.sub(lambda g: _trigraph_rep[g.group()[-1]],input)
 
 def default_lexer():
     return lex.lex(optimize=in_production)
