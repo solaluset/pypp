@@ -10,7 +10,7 @@ if __name__ == '__main__' and __package__ is None:
     sys.path.append( os.path.dirname( os.path.dirname( os.path.abspath(__file__) ) ) )
 from pypp.preprocessor import Preprocessor, OutputDirective, Action
 
-version='1.31b0'
+version='1.32b0'
 
 __all__ = []
 
