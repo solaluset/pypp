@@ -8,7 +8,7 @@ A C99 preprocessor (fork) written in pure Python
     :target: https://github.com/ned14/pcpp/actions
 
 Purpose of fork - to support indentation and maybe other Python-specific things for creating
-`PWCP <https://github.com/Krutyi-4el/pwcp>`_ (Python With C Preprocessor). If there's a problem with pypp, please open an issue there.
+`PWCP <https://github.com/solaluset/pwcp>`_ (Python With C Preprocessor). If there's a problem with pypp, please open an issue there.
 
 \(C) 2018-2021 Niall Douglas http://www.nedproductions.biz/ and (C) 2007-2020 David Beazley http://www.dabeaz.com/
 
