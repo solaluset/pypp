@@ -40,6 +40,7 @@ tokens = (
 
    'CPP_UNTERMINATED_COMMENT',
    'PY_TRIPLE_STRING', 'PY_UNTERMINATED_TRIPLE_STRING',
+   'PY_WALRUS',
 )
 
 literals = "+-*/%|&~^<>=!?()[]{}.,;:\\\'\""
@@ -132,6 +133,8 @@ def t_PY_TRIPLE_STRING(t):
 def t_PY_UNTERMINATED_TRIPLE_STRING(t):
     r'("""|\'\'\')'
     return t
+
+t_PY_WALRUS = r':='
 
 def t_CPP_STRING(t):
     r'(?P<quote>"|\')([^\\\n]|(\\(.|\n)))*?(?P=quote)'
