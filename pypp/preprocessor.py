@@ -923,7 +923,7 @@ class Preprocessor(PreprocessorHooks):
                         args = []
                         raise OutputDirective(Action.IgnoreAndRemove)
 
-                    if name == 'pragma' and args[0].value == 'pypp':
+                    if name == 'pragma' and args and args[0].value == 'pypp':
                         if args[2].value == "off":
                             self.disabled = True
                         elif args[2].value == "on":
