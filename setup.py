@@ -1,14 +1,20 @@
 #!/usr/bin/env python
 
+import os
+import shutil
+
 from setuptools import setup, find_packages
-import os, pypp
+
+import pypp
 
 here = os.path.abspath(os.path.dirname(__file__))
 
 # Get the long description from the README file
 with open(os.path.join(here, 'README.rst')) as f:
     long_description = f.read()
-    
+
+shutil.copy2(os.path.join(here, "LICENSE.txt"), os.path.join(here, "pypp"))
+
 setup(
     name='pypp',
     version=pypp.version,
@@ -17,7 +23,7 @@ setup(
     author='Niall Douglas and David Beazley',
     url="https://github.com/solaluset/pypp",
     packages=['pypp', 'pypp/ply/ply'],
-    package_data={'pypp' : ['../LICENSE.txt']},
+    package_data={"pypp": ["LICENSE.txt"]},
     test_suite='tests',
     entry_points={
         'console_scripts': [ 'pypp=pypp:main' ]
