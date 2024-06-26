@@ -2,3 +2,4 @@
 build/*
 dist/*
 pypp.egg-info/*
+pypp/LICENSE.txt
