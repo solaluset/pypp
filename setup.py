@@ -1,23 +1,29 @@
 #!/usr/bin/env python
 
+import os
+import shutil
+
 from setuptools import setup, find_packages
-import os, pypp
+
+import pypp
 
 here = os.path.abspath(os.path.dirname(__file__))
 
 # Get the long description from the README file
 with open(os.path.join(here, 'README.rst')) as f:
     long_description = f.read()
-    
+
+shutil.copy2(os.path.join(here, "LICENSE.txt"), os.path.join(here, "pypp"))
+
 setup(
     name='pypp',
     version=pypp.version,
-    description='A C99 preprocessor written in pure Python',
+    description="A C99-lile preprocessor for Python",
     long_description=long_description,
     author='Niall Douglas and David Beazley',
-    url='https://github.com/ned14/pcpp',
+    url="https://github.com/solaluset/pypp",
     packages=['pypp', 'pypp/ply/ply'],
-    package_data={'pypp' : ['../LICENSE.txt']},
+    package_data={"pypp": ["LICENSE.txt"]},
     test_suite='tests',
     entry_points={
         'console_scripts': [ 'pypp=pypp:main' ]
@@ -29,8 +35,6 @@ setup(
         'Intended Audience :: Developers',
         'Topic :: Software Development :: Build Tools',
         'License :: OSI Approved :: BSD License',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
     ],
 )
