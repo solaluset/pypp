@@ -12,10 +12,10 @@ with open(os.path.join(here, 'README.rst')) as f:
 setup(
     name='pypp',
     version=pypp.version,
-    description='A C99 preprocessor written in pure Python',
+    description="A C99-lile preprocessor for Python",
     long_description=long_description,
     author='Niall Douglas and David Beazley',
-    url='https://github.com/ned14/pcpp',
+    url="https://github.com/solaluset/pypp",
     packages=['pypp', 'pypp/ply/ply'],
     package_data={'pypp' : ['../LICENSE.txt']},
     test_suite='tests',
@@ -29,8 +29,6 @@ setup(
         'Intended Audience :: Developers',
         'Topic :: Software Development :: Build Tools',
         'License :: OSI Approved :: BSD License',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
     ],
 )
