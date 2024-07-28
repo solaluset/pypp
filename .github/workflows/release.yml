@@ -17,9 +17,10 @@ jobs:
     - uses: actions/setup-python@v5
 
     - name: Build
-      run: >
+      run: |
+        git submodule update --init --recursive
         pip install build
-        && python -m build
+        python -m build
 
     - name: Upload binaries to release
       uses: pypa/gh-action-pypi-publish@release/v1
