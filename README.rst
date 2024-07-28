@@ -1,5 +1,5 @@
 A C99 preprocessor (fork) written in pure Python
-=========================================
+================================================
 .. role:: c(code)
    :language: c
 
