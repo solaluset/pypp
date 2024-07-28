@@ -1,5 +1,5 @@
 [submodule "pypp/ply"]
 	path = pypp/ply
-	url = https://github.com/ned14/ply.git
+	url = https://github.com/dabeaz/ply.git
 	branch = master
 	ignore = untracked

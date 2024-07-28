@@ -12,6 +12,7 @@
 from __future__ import generators, print_function, absolute_import, division
 
 import sys, re, os
+import pickle
 
 in_production = 1  # Set to 0 if editing pypp implementation!
 
@@ -160,17 +161,35 @@ def t_error(t):
     return t
 
 
+PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
 # Python 2/3 compatible way of importing a subpackage
 oldsyspath = sys.path
-sys.path = [ os.path.join( os.path.dirname( os.path.abspath(__file__) ), "ply" ) ] + sys.path
+sys.path = [
+    os.path.join(PACKAGE_DIR, "ply", "src")
+] + sys.path
 from ply import lex, yacc
 from ply.lex import LexToken
 sys.path = oldsyspath
 del oldsyspath
 
 
+PICKLE_DIR = os.path.join(PACKAGE_DIR, "pickled")
+PICKLE_PROTOCOL = 4
+
+
+def load_or_create(factory, filename, factory_args=(), factory_kwargs={}):
+    pickled_filename = os.path.join(PICKLE_DIR, filename)
+    if in_production:
+        with open(pickled_filename, "rb") as pickled_file:
+            return pickle.load(pickled_file)
+    obj = factory(*factory_args, **factory_kwargs)
+    with open(pickled_filename, "wb") as pickled_file:
+        pickle.dump(obj, pickled_file, protocol=PICKLE_PROTOCOL)
+    return obj
+
+
 def default_lexer():
-    return lex.lex(optimize=in_production)
+    return load_or_create(lex.lex, "lex.pickle")
 
 # ------------------------------------------------------------------
 # Macro object
