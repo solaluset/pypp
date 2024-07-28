@@ -16,7 +16,7 @@ with open(os.path.join(here, 'README.rst')) as f:
 shutil.copy2(os.path.join(here, "LICENSE.txt"), os.path.join(here, "pypp"))
 
 setup(
-    name='pypp',
+    name="pypp-for-pwcp",
     version=pypp.version,
     description="A C99-lile preprocessor for Python",
     long_description=long_description,
