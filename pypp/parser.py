@@ -172,7 +172,7 @@ del oldsyspath
 
 
 def default_lexer():
-    return lex.lex(optimize=in_production)
+    return lex.lex()
 
 # ------------------------------------------------------------------
 # Macro object
