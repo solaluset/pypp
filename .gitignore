@@ -1,5 +1,6 @@
 *.pyc
 build/*
 dist/*
-pypp.egg-info/*
+*.egg-info/*
 pypp/LICENSE.txt
+tests/
