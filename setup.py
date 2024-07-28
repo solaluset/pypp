@@ -23,7 +23,7 @@ setup(
     author='Niall Douglas and David Beazley',
     url="https://github.com/solaluset/pypp",
     packages=["pypp", "pypp/ply/src/ply"],
-    package_data={"pypp": ["LICENSE.txt"]},
+    package_data={"pypp": ["LICENSE.txt", "pickled/*"]},
     test_suite='tests',
     entry_points={
         'console_scripts': [ 'pypp=pypp:main' ]
