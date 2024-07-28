@@ -162,7 +162,9 @@ def t_error(t):
 
 # Python 2/3 compatible way of importing a subpackage
 oldsyspath = sys.path
-sys.path = [ os.path.join( os.path.dirname( os.path.abspath(__file__) ), "ply" ) ] + sys.path
+sys.path = [
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "ply", "src")
+] + sys.path
 from ply import lex, yacc
 from ply.lex import LexToken
 sys.path = oldsyspath

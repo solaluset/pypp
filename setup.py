@@ -22,7 +22,7 @@ setup(
     long_description=long_description,
     author='Niall Douglas and David Beazley',
     url="https://github.com/solaluset/pypp",
-    packages=['pypp', 'pypp/ply/ply'],
+    packages=["pypp", "pypp/ply/src/ply"],
     package_data={"pypp": ["LICENSE.txt"]},
     test_suite='tests',
     entry_points={
