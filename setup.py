@@ -18,7 +18,7 @@ shutil.copy2(os.path.join(here, "LICENSE.txt"), os.path.join(here, "pypp"))
 setup(
     name="pypp-for-pwcp",
     version=pypp.version,
-    description="A C99-lile preprocessor for Python",
+    description="A C99-like preprocessor for Python",
     long_description=long_description,
     author='Niall Douglas and David Beazley',
     url="https://github.com/solaluset/pypp",
