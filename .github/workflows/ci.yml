@@ -44,7 +44,7 @@ jobs:
     - name: Test
       shell: bash
       run:  |
-         python setup.py test
+         python -m unittest discover -b -s tests -p '*.py'
 
     - name: Install
       shell: bash
