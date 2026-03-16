@@ -21,7 +21,7 @@ class FileAction(argparse.Action):
             items = []
         else:
             items = copy.copy(getattr(namespace, self.dest))
-        items += [argparse.FileType('rt')(value) for value in values]
+        items += [sys.stdin if value == "-" else open(value, "rt") for value in values]
         setattr(namespace, self.dest, items)
 
 class CmdPreprocessor(Preprocessor):
@@ -37,7 +37,7 @@ class CmdPreprocessor(Preprocessor):
     '''Note that so pypp can stand in for other preprocessor tooling, it
     ignores any arguments it does not understand.''')
         argp.add_argument('inputs', metavar = 'input', default = [sys.stdin], nargs = '*', action = FileAction, help = 'Files to preprocess (use \'-\' for stdin)')
-        argp.add_argument('-o', dest = 'output', metavar = 'path', type = argparse.FileType('wt'), default=sys.stdout, nargs = '?', help = 'Output to a file instead of stdout')
+        argp.add_argument('-o', dest = 'output', metavar = 'path', default=sys.stdout, nargs = '?', help = 'Output to a file instead of stdout')
         argp.add_argument('-D', dest = 'defines', metavar = 'macro[=val]', nargs = 1, action = 'append', help = 'Predefine name as a macro [with value]')
         argp.add_argument('-U', dest = 'undefines', metavar = 'macro', nargs = 1, action = 'append', help = 'Pre-undefine name as a macro')
         argp.add_argument('-N', dest = 'nevers', metavar = 'macro', nargs = 1, action = 'append', help = 'Never define name as a macro, even if defined during the preprocessing.')
@@ -55,7 +55,7 @@ class CmdPreprocessor(Preprocessor):
         argp.add_argument('--line-directive', dest = 'line_directive', metavar = 'form', default = '#line', nargs = '?', help = "Form of line directive to use, defaults to #line, specify nothing to disable output of line directives")
         argp.add_argument('--debug', dest = 'debug', action = 'store_true', help = 'Generate a pypp_debug.log file logging execution')
         argp.add_argument('--time', dest = 'time', action = 'store_true', help = 'Print the time it took to #include each file')
-        argp.add_argument('--filetimes', dest = 'filetimes', metavar = 'path', type = argparse.FileType('wt'), default=None, nargs = '?', help = 'Write CSV file with time spent inside each included file, inclusive and exclusive')
+        argp.add_argument('--filetimes', dest = 'filetimes', metavar = 'path', default=None, nargs = '?', help = 'Write CSV file with time spent inside each included file, inclusive and exclusive')
         argp.add_argument('--compress', dest = 'compress', action = 'store_true', help = 'Make output as small as possible')
         argp.add_argument('--assume-input-encoding', dest = 'assume_input_encoding', metavar = '<encoding>', default = None, nargs = 1, help = 'The text encoding to assume inputs are in')
         argp.add_argument('--output-encoding', dest = 'output_encoding', metavar = '<encoding>', default = None, nargs = 1, help = 'The text encoding to use when writing files')
@@ -68,6 +68,10 @@ class CmdPreprocessor(Preprocessor):
             print("NOTE: Argument %s not known, ignoring!" % arg, file = sys.stderr)
 
         self.args = args[0]
+        if isinstance(self.args.output, str):
+            self.args.output = open(self.args.output, "wt")
+        if isinstance(self.args.filetimes, str):
+            self.args.filetimes = open(self.args.filetimes, "wt")
         super(CmdPreprocessor, self).__init__()
         
         # Override Preprocessor instance variables
