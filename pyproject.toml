@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pypp-for-pwcp"
+description = "A C99-like preprocessor for Python"
+readme = "README.rst"
+license = {file = "LICENSE.txt"}
+authors = [
+    {name = "Niall Douglas and David Beazley"}
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Build Tools",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12"
+]
+requires-python = ">=3.6"
+dynamic = ["version"]
+
+[project.scripts]
+pypp = "pypp:main"
+
+[tool.setuptools]
+packages = ["pypp", "pypp.ply.src.ply"]
+
+[tool.setuptools.dynamic]
+version = {attr = "pypp.pcmd.version"}
+
+[tool.setuptools.package-data]
+pypp = ["LICENSE.txt", "pickled/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py", "tests/*.py"]
+addopts = ["-v"]

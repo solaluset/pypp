@@ -1,16 +1,14 @@
 #!/usr/bin/python
 # Python C99 conforming preprocessor command line
-# (C) 2017-2020 Niall Douglas http://www.nedproductions.biz/
+# (C) 2017-2026 Niall Douglas http://www.nedproductions.biz/
 # Started: March 2017
-
-from __future__ import generators, print_function, absolute_import, division
 
 import sys, argparse, traceback, os, copy, io, re
 if __name__ == '__main__' and __package__ is None:
     sys.path.append( os.path.dirname( os.path.dirname( os.path.abspath(__file__) ) ) )
 from pypp.preprocessor import Preprocessor, OutputDirective, Action
 
-version = "1.33b5"
+version = "1.34.0"
 
 __all__ = []
 
@@ -23,7 +21,12 @@ class FileAction(argparse.Action):
             items = []
         else:
             items = copy.copy(getattr(namespace, self.dest))
-        items += [argparse.FileType('rt')(value) for value in values]
+        for value in values:
+            if value == "-":
+                value = sys.stdin
+            elif isinstance(value, str):
+                value = open(value, "rt")
+            items.append(value)
         setattr(namespace, self.dest, items)
 
 class CmdPreprocessor(Preprocessor):
@@ -39,7 +42,7 @@ class CmdPreprocessor(Preprocessor):
     '''Note that so pypp can stand in for other preprocessor tooling, it
     ignores any arguments it does not understand.''')
         argp.add_argument('inputs', metavar = 'input', default = [sys.stdin], nargs = '*', action = FileAction, help = 'Files to preprocess (use \'-\' for stdin)')
-        argp.add_argument('-o', dest = 'output', metavar = 'path', type = argparse.FileType('wt'), default=sys.stdout, nargs = '?', help = 'Output to a file instead of stdout')
+        argp.add_argument('-o', dest = 'output', metavar = 'path', default=sys.stdout, nargs = '?', help = 'Output to a file instead of stdout')
         argp.add_argument('-D', dest = 'defines', metavar = 'macro[=val]', nargs = 1, action = 'append', help = 'Predefine name as a macro [with value]')
         argp.add_argument('-U', dest = 'undefines', metavar = 'macro', nargs = 1, action = 'append', help = 'Pre-undefine name as a macro')
         argp.add_argument('-N', dest = 'nevers', metavar = 'macro', nargs = 1, action = 'append', help = 'Never define name as a macro, even if defined during the preprocessing.')
@@ -50,16 +53,19 @@ class CmdPreprocessor(Preprocessor):
         argp.add_argument('--passthru-unknown-exprs', dest = 'passthru_undefined_exprs', action = 'store_true', help = 'Unknown macros in expressions cause preprocessor logic to be passed through instead of executed by treating unknown macros as 0L')
         argp.add_argument('--passthru-comments', dest = 'passthru_comments', action = 'store_true', help = 'Pass through comments unmodified')
         argp.add_argument('--passthru-magic-macros', dest = 'passthru_magic_macros', action = 'store_true', help = 'Pass through double underscore magic macros unmodified')
+        argp.add_argument('--passthru-has-include', dest = 'passthru_has_include', action = 'store_true', help = 'Pass through __has_include expressions unmodified')
         argp.add_argument('--passthru-includes', dest = 'passthru_includes', metavar = '<regex>', default = None, nargs = 1, help = "Regular expression for which #includes to not expand. #includes, if found, are always executed")
         argp.add_argument('--disable-auto-pragma-once', dest = 'auto_pragma_once_disabled', action = 'store_true', default = False, help = 'Disable the heuristics which auto apply #pragma once to #include files wholly wrapped in an obvious include guard macro')
+        argp.add_argument('--enable-include-next', dest = 'include_next_enabled', action = 'store_true', default = False, help = 'Enable #include_next support, which you should try to avoid using')
         argp.add_argument('--line-directive', dest = 'line_directive', metavar = 'form', default = '#line', nargs = '?', help = "Form of line directive to use, defaults to #line, specify nothing to disable output of line directives")
         argp.add_argument('--debug', dest = 'debug', action = 'store_true', help = 'Generate a pypp_debug.log file logging execution')
         argp.add_argument('--time', dest = 'time', action = 'store_true', help = 'Print the time it took to #include each file')
-        argp.add_argument('--filetimes', dest = 'filetimes', metavar = 'path', type = argparse.FileType('wt'), default=None, nargs = '?', help = 'Write CSV file with time spent inside each included file, inclusive and exclusive')
+        argp.add_argument('--filetimes', dest = 'filetimes', metavar = 'path', default=None, nargs = '?', help = 'Write CSV file with time spent inside each included file, inclusive and exclusive')
         argp.add_argument('--compress', dest = 'compress', action = 'store_true', help = 'Make output as small as possible')
         argp.add_argument('--assume-input-encoding', dest = 'assume_input_encoding', metavar = '<encoding>', default = None, nargs = 1, help = 'The text encoding to assume inputs are in')
         argp.add_argument('--output-encoding', dest = 'output_encoding', metavar = '<encoding>', default = None, nargs = 1, help = 'The text encoding to use when writing files')
         argp.add_argument('--write-bom', dest = 'write_bom', action = 'store_true', help = 'Prefix any output with a Unicode BOM')
+        argp.add_argument('--trigraphs', dest = 'enable_trigraphs', action = 'store_true', help = 'Enable processing trigraphs')
         argp.add_argument('--version', action='version', version='pypp ' + version)
         args = argp.parse_known_args(argv[1:])
         #print(args)
@@ -67,6 +73,10 @@ class CmdPreprocessor(Preprocessor):
             print("NOTE: Argument %s not known, ignoring!" % arg, file = sys.stderr)
 
         self.args = args[0]
+        if isinstance(self.args.output, str):
+            self.args.output = open(self.args.output, "wt")
+        if isinstance(self.args.filetimes, str):
+            self.args.filetimes = open(self.args.filetimes, "wt")
         super(CmdPreprocessor, self).__init__()
         
         # Override Preprocessor instance variables
@@ -76,6 +86,7 @@ class CmdPreprocessor(Preprocessor):
         if self.args.debug:
             self.debugout = open("pypp_debug.log", "wt")
         self.auto_pragma_once_enabled = not self.args.auto_pragma_once_disabled
+        self.include_next_enabled = self.args.include_next_enabled
         self.line_directive = self.args.line_directive
         if self.line_directive is not None and self.line_directive.lower() in ('nothing', 'none', ''):
             self.line_directive = None
@@ -88,6 +99,7 @@ class CmdPreprocessor(Preprocessor):
             self.expand_linemacro = False
             self.expand_filemacro = False
             self.expand_countermacro = False
+        self.passthru_expr_has_include = self.args.passthru_has_include
         if self.args.assume_input_encoding is not None:
             self.args.assume_input_encoding = self.args.assume_input_encoding[0]
             self.assume_encoding = self.args.assume_input_encoding
@@ -106,6 +118,7 @@ class CmdPreprocessor(Preprocessor):
             self.args.output = _
             if self.args.write_bom:
                 self.args.output.write('\ufeff')
+        self.enable_trigraphs = self.args.enable_trigraphs
         
         # My own instance variables
         self.bypass_ifpassthru = False

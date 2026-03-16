@@ -3,17 +3,17 @@ name: CI
 on:
   push:
     branches:
-    - master
+      - master
   pull_request:
 
 jobs:
   generate-matrix:
-    uses: solaluset/python-version-matrix/.github/workflows/generate.yml@v1.0
+    uses: solaluset/python-version-matrix/.github/workflows/generate.yml@v1.0.1
     with:
       runners: '[
-        "ubuntu-22.04"
+        "ubuntu-24.04"
       ]'
-      min-version: "3.7"
+      min-version: "3.8"
       include-pre-releases: true
       implementations: '["CPython", "PyPy"]'
 
@@ -31,21 +31,62 @@ jobs:
 
     - shell: bash
       run: |
-         pip install -r requirements.txt
-         git submodule update --init --recursive
+        pip install -r requirements.txt
+        git submodule update --init --recursive
 
     - name: Build
       shell: bash
-      run:  |
-         python setup.py build
+      run: |
+        python setup.py build
 
     - name: Test
       shell: bash
       run:  |
-         python -m unittest discover -b -s tests -p '*.py'
+        python -m pytest tests/ -v
 
-    - name: Install
+    - name: Install with pip
       shell: bash
       run:  |
-         python setup.py install
-         pypp --version
+        python setup.py install
+        pypp --version
+
+  CI-uv:
+    needs: [generate-matrix]
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+
+    steps:
+    - uses: actions/checkout@v6
+    - uses: actions/setup-python@v6
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install uv
+      shell: bash
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+    - shell: bash
+      run: |
+        uv venv test_env
+        source test_env/bin/activate
+
+        uv pip install -r requirements.txt
+        git submodule update --init --recursive
+
+    - name: Install with uv
+      shell: bash
+      run: |
+        source test_env/bin/activate
+
+        uv pip install -e .
+        pypp --version
+
+    - name: Test with uv
+      shell: bash
+      run: |
+        source test_env/bin/activate
+
+        python -m pytest tests/ -v

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # Python C99 conforming preprocessor parser config
-# (C) 2017-2020 Niall Douglas http://www.nedproductions.biz/
+# (C) 2017-2026 Niall Douglas http://www.nedproductions.biz/
 # and (C) 2007-2017 David Beazley http://www.dabeaz.com/
 # Started: Feb 2017
 #
@@ -9,18 +9,12 @@
 # This edition substantially improves on standards conforming output,
 # getting quite close to what clang or GCC outputs.
 
-from __future__ import generators, print_function, absolute_import, division
-
 import sys, re, os
 import pickle
 
 in_production = 1  # Set to 0 if editing pypp implementation!
 
-# Some Python 3 compatibility shims
-if sys.version_info.major < 3:
-    STRING_TYPES = (str, unicode)
-else:
-    STRING_TYPES = str
+STRING_TYPES = str
 
 # -----------------------------------------------------------------------------
 # Default preprocessor lexer definitions.   These tokens are enough to get
@@ -28,7 +22,7 @@ else:
 # -----------------------------------------------------------------------------
 
 tokens = (
-   'CPP_ID','CPP_INTEGER', 'CPP_FLOAT', 'CPP_STRING', 'CPP_WS', 'CPP_LINECONT', 'CPP_COMMENT1',
+   'CPP_ID', 'PP_NUMBER', 'CPP_STRING', 'CPP_WS', 'CPP_LINECONT', 'CPP_COMMENT1',
    'CPP_POUND','CPP_DPOUND', 'CPP_PLUS', 'CPP_MINUS', 'CPP_STAR', 'CPP_FSLASH', 'CPP_PERCENT', 'CPP_BAR',
    'CPP_AMPERSAND', 'CPP_TILDE', 'CPP_HAT', 'CPP_LESS', 'CPP_GREATER', 'CPP_EQUAL', 'CPP_EXCLAMATION',
    'CPP_QUESTION', 'CPP_LPAREN', 'CPP_RPAREN', 'CPP_LBRACKET', 'CPP_RBRACKET', 'CPP_LCURLY', 'CPP_RCURLY',
@@ -116,15 +110,12 @@ t_CPP_RSHIFTEQUAL = r'>>='
 # Identifier
 t_CPP_ID = r'[^\W\d]\w*'
 
-# Integer literal
-def CPP_INTEGER(t):
-    r'(((((0x)|(0X))[0-9a-fA-F]+)|(\d+))([uU][lL]|[lL][uU]|[uU]|[lL])?)'
+# Preprocessor number
+def PP_NUMBER(t):
+    r"\.?\d(?:\.|[\w_]|'[\w_]|[eEpP][-+])*"
     return t
 
-t_CPP_INTEGER = CPP_INTEGER
-
-# Floating literal
-t_CPP_FLOAT = r'((\d+)(\.\d+)(e(\+|-)?(\d+))?|(\d+)e(\+|-)?(\d+))([lL]|[fF])?'
+t_PP_NUMBER = PP_NUMBER
 
 # String literals
 def t_PY_TRIPLE_STRING(t):
@@ -190,6 +181,39 @@ def load_or_create(factory, filename, factory_args=(), factory_kwargs={}):
 
 def default_lexer():
     return load_or_create(lex.lex, "lex.pickle")
+
+# -----------------------------------------------------------------------------
+# trigraph()
+#
+# Given an input string, this function replaces all trigraph sequences. 
+# The following mapping is used:
+#
+#     ??=    #
+#     ??/    \
+#     ??'    ^
+#     ??(    [
+#     ??)    ]
+#     ??!    |
+#     ??<    {
+#     ??>    }
+#     ??-    ~
+# -----------------------------------------------------------------------------
+
+_trigraph_pat = re.compile(r'''\?\?[=/\'\(\)\!<>\-]''')
+_trigraph_rep = {
+    '=': '#',
+    '/': '\\',
+    "'": '^',
+    '(': '[',
+    ')': ']',
+    '!': '|',
+    '<': '{',
+    '>': '}',
+    '-': '~',
+}
+
+def trigraph(input):
+    return _trigraph_pat.sub(lambda g: _trigraph_rep[g.group()[-1]], input)
 
 # ------------------------------------------------------------------
 # Macro object
@@ -265,11 +289,7 @@ class PreprocessorHooks(object):
         examines if it starts with a BOM (if so, it removes it), and returns the file
         object opened. This raises the appropriate exception if the path was not found.
         """
-        if sys.version_info.major < 3:
-            assert self.assume_encoding is None
-            ret = open(includepath, 'r')
-        else:
-            ret = open(includepath, 'r', encoding = self.assume_encoding)
+        ret = open(includepath, 'r', encoding = self.assume_encoding)
         bom = ret.read(1)
         #print(repr(bom))
         if bom != '\ufeff':
