@@ -3,9 +3,8 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pcpp"
-version = "1.31"
-description = "A C99 preprocessor written in pure Python"
+name = "pypp-for-pwcp"
+description = "A C99-like preprocessor for Python"
 readme = "README.rst"
 license = {file = "LICENSE.txt"}
 authors = [
@@ -26,15 +25,19 @@ classifiers = [
     "Programming Language :: Python :: 3.12"
 ]
 requires-python = ">=3.6"
+dynamic = ["version"]
 
 [project.scripts]
-pcpp = "pcpp:main"
+pypp = "pypp:main"
 
 [tool.setuptools]
-packages = ["pcpp", "pcpp.ply.ply"]
+packages = ["pypp", "pypp.ply.src.ply"]
+
+[tool.setuptools.dynamic]
+version = {attr = "pypp.pcmd.version"}
 
 [tool.setuptools.package-data]
-pcpp = ["../LICENSE.txt"]
+pypp = ["LICENSE.txt", "pickled/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
