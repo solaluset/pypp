@@ -1,13 +1,7 @@
-from __future__ import absolute_import, print_function
+
 import unittest, time
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO
-try:
-    clock = time.process_time
-except:
-    clock = time.clock
+from io import StringIO
+clock = time.process_time
 
 class runner(object):
     def runTest(self):
@@ -43,6 +37,7 @@ class runner(object):
 
         start = clock()
         p = PassThruPreprocessor()
+        p.passthru_expr_has_include = True
         p.parse(self.input)
         oh = StringIO()
         p.write(oh)
@@ -378,3 +373,8 @@ hi
 #endif
 """
     output = r""""""
+
+
+if __name__ == '__main__':
+    unittest.main()
+    

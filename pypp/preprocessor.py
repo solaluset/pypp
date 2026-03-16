@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # Python C99 conforming preprocessor useful for generating single include files
-# (C) 2017-2021 Niall Douglas http://www.nedproductions.biz/
+# (C) 2017-2026 Niall Douglas http://www.nedproductions.biz/
 # and (C) 2007-2017 David Beazley http://www.dabeaz.com/
 # Started: Feb 2017
 #
@@ -9,23 +9,15 @@
 # This edition substantially improves on standards conforming output,
 # getting quite close to what clang or GCC outputs.
 
-from __future__ import generators, print_function, absolute_import, division
-
 import sys, os, re, codecs, time, copy, traceback
 if __name__ == '__main__' and __package__ is None:
     sys.path.append( os.path.dirname( os.path.dirname( os.path.abspath(__file__) ) ) )
 from pypp.parser import STRING_TYPES, default_lexer, Macro, Action, OutputDirective, PreprocessorHooks
 from pypp.evaluator import Evaluator
 
-# Some Python 3 compatibility shims
-if sys.version_info.major < 3:
-    FILE_TYPES = file
-    clock = time.clock
-else:
-    xrange = range
-    import io
-    FILE_TYPES = io.IOBase
-    clock = time.process_time
+import io
+FILE_TYPES = io.IOBase
+clock = time.process_time
 
 __all__ = ['Preprocessor', 'PreprocessorHooks', 'OutputDirective', 'Action', 'Evaluator']
 
@@ -65,15 +57,18 @@ class Preprocessor(PreprocessorHooks):
         self.temp_path = []      # list of temporary search paths for includes
         self.rewrite_paths = [(re.escape(os.path.abspath('') + os.sep) + '(.*)', '\\1')]
         self.passthru_includes = None
+        self.passthru_expr_has_include = False
         self.include_once = {}
         self.include_depth = 0
         self.include_times = []  # list of FileInclusionTime
         self.return_code = 0
         self.debugout = None
         self.auto_pragma_once_enabled = True
+        self.include_next_enabled = False
         self.line_directive = '#line'
         self.compress = False
         self.assume_encoding = None
+        self.enable_trigraphs = False
 
         # Probe the lexer for selected tokens
         self.__lexprobe()
@@ -96,8 +91,14 @@ class Preprocessor(PreprocessorHooks):
         self.linemacro = 0
         self.linemacrodepth = 0
         self.countermacro = 0
+        self.current_include_next_unique_ids = []
         self.parser = None
 
+    @staticmethod
+    def __file_unique_id(fh):
+        s = os.stat(fh.fileno())
+        return s.st_ino ^ s.st_size
+    
     # -----------------------------------------------------------------------------
     # tokenize()
     #
@@ -466,7 +467,7 @@ class Preprocessor(PreprocessorHooks):
     # representing the replacement macro tokens
     # ----------------------------------------------------------------------
 
-    def macro_expand_args(self,macro,args):
+    def macro_expand_args(self,macro,args,expanding_from):
         """Given a Macro and list of arguments (each a token list), this method
         returns an expanded version of a macro.  The return value is a token sequence
         representing the replacement macro tokens"""
@@ -479,7 +480,7 @@ class Preprocessor(PreprocessorHooks):
             if argnum not in str_expansion:
                 # Strip all non-space whitespace before stringization
                 tokens = copy.copy(args[argnum])
-                for j in xrange(len(tokens)):
+                for j in range(len(tokens)):
                     if tokens[j].type in self.t_WS and tokens[j].type != self.t_LINECONT:
                         tokens[j].value = ' '
                 # Collapse all multiple whitespace too
@@ -518,7 +519,7 @@ class Preprocessor(PreprocessorHooks):
             elif ptype == 'e':
                 #print('*** Function macro arg', rep[i], 'replace with', args[argnum], 'which expands into', self.expand_macros(copy.copy(args[argnum])))
                 if argnum not in expanded:
-                    expanded[argnum] = self.expand_macros(copy.copy(args[argnum]))
+                    expanded[argnum] = self.expand_macros(copy.copy(args[argnum]), expanding_from)
                 rep[i:i+1] = expanded[argnum]
 
         # Get rid of removed comma if necessary
@@ -657,7 +658,7 @@ class Preprocessor(PreprocessorHooks):
                                         args.append([])
                                         
                                 # Get macro replacement text
-                                rep = self.macro_expand_args(m,args)
+                                rep = self.macro_expand_args(m, args, expanding_from)
                                 if self.fix_indentation:
                                     self._fix_indentation_in(rep, last_indent)
                                 ex = self.expand_macros(rep, expanding_from + [t.value], passthru_lines)
@@ -742,6 +743,8 @@ class Preprocessor(PreprocessorHooks):
                         elif tokens[j].type == self.t_ID:
                             if tokens[j].value in self.macros:
                                 result = "1L"
+                            elif not self.passthru_expr_has_include and tokens[j].value == '__has_include':
+                                result = "1L"
                             else:
                                 repl = self.on_unknown_macro_in_defined_expr(tokens[j])
                                 if repl is None:
@@ -771,6 +774,45 @@ class Preprocessor(PreprocessorHooks):
         tokens = self.expand_macros(tokens)
         # Replace any defined(macro) after macro expansion
         tokens = replace_defined(tokens)
+        if not self.passthru_expr_has_include:
+            # We need to specially handle _has_include(<...>) because the inner <...> parses as an invalid expression.
+            # We do this by injecting it as a string, and we undo that later.
+            def replace_has_include(tokens):
+                i = 0
+                while i < len(tokens):
+                    if tokens[i].type == self.t_ID and tokens[i].value == '__has_include':
+                        j = i + 1
+                        needparen = False
+                        bracketpos = -1
+                        while j < len(tokens):
+                            if tokens[j].type in self.t_WS:
+                                j += 1
+                                continue
+                            elif tokens[j].type == self.t_ID:
+                                assert bracketpos >= 0
+                                # Convert the <id> into a string
+                                tokens[j].type = self.t_STRING
+                                tokens[j].value = '"' + ''.join([tokens[x].value for x in range(bracketpos, j + 1)])
+                                del tokens[bracketpos:j]
+                                j = bracketpos
+                            elif tokens[j].value == '<':
+                                bracketpos = j
+                            elif tokens[j].value == '>':
+                                assert bracketpos > 0
+                                tokens[bracketpos].value += ''.join([tokens[x].value for x in range(bracketpos + 1, j + 1)]) + '"'
+                                del tokens[bracketpos + 1:j + 1]
+                                j = bracketpos
+                                bracketpos = -1
+                            elif tokens[j].value == '(':
+                                needparen = True
+                            elif tokens[j].value == ')':
+                                break
+                            elif tokens[j].type != self.t_STRING:
+                                self.on_error(tokens[i].source,tokens[i].lineno,"Malformed __has_include()")
+                            j += 1
+                    i += 1
+                return tokens
+            tokens = replace_has_include(tokens)
         if not tokens:
             return (0, None)
         class IndirectToMacroHook(object):
@@ -790,6 +832,17 @@ class Preprocessor(PreprocessorHooks):
                     return key
                 return repl
         evalvars = IndirectToMacroHook(self)
+        class IndirectToHasInclude(object):
+            def __init__(self, p):
+                self.__preprocessor = p
+            def __call__(self, x):
+                #print("*** has_include", x, file = sys.stderr)
+                if x.startswith('"<') and x.endswith('>"'):
+                    # Undo our special handling from earlier
+                    x = x[1:-1]
+                x = self.__preprocessor.tokenize(x)
+                exists = [ p for p in self.__preprocessor.include(x, x, include_exists_only=True) ]
+                return 1 if exists[0] else 0
         class IndirectToMacroFunctionHook(object):
             def __init__(self, p):
                 self.__preprocessor = p
@@ -797,6 +850,8 @@ class Preprocessor(PreprocessorHooks):
             def __contains__(self, key):
                 return True
             def __getitem__(self, key):
+                if not self.__preprocessor.passthru_expr_has_include and key == '__has_include':
+                    return IndirectToHasInclude(self.__preprocessor)
                 repl = self.__preprocessor.on_unknown_macro_function_in_expr(key)
                 #print("*** IndirectToMacroFunctionHook[", key, "] returns", repl, file = sys.stderr)
                 if repl is None:
@@ -834,7 +889,9 @@ class Preprocessor(PreprocessorHooks):
                         rewritten_source = rewritten_source.replace(os.sep, '/')
                     break
 
-        lines = self.group_lines(input, rewritten_source)
+        # Replace trigraph sequences
+        t = trigraph(input) if self.enable_trigraphs else input
+        lines = self.group_lines(t, rewritten_source)
 
         if not source:
             source = ""
@@ -951,7 +1008,7 @@ class Preprocessor(PreprocessorHooks):
                             if handling is None:
                                 for tok in x:
                                     yield tok
-                    elif name == 'include':
+                    elif name == 'include' or (self.include_next_enabled and name == 'include_next'):
                         if enable:
                             for tok in self.expand_macros(chunk):
                                 yield tok
@@ -960,7 +1017,8 @@ class Preprocessor(PreprocessorHooks):
                             if args and args[0].value != '<' and args[0].type != self.t_STRING:
                                 args = self.tokenstrip(self.expand_macros(args))
                             # print('***', ''.join([x.value for x in args]), file = sys.stderr)
-                            for tok in self.include(args, x):
+                            for tok in self.include(args, x,
+                                                    include_next_is_active = (name == 'include_next' and abssource is not None)):
                                 yield tok
                             if oldfile is not None:
                                 self.macros['__FILE__'] = oldfile
@@ -980,7 +1038,7 @@ class Preprocessor(PreprocessorHooks):
                         ifstack.append(ifstackentry(enable,iftrigger,ifpassthru,x))
                         if enable:
                             ifpassthru = False
-                            if not args[0].value in self.macros:
+                            if not args[0].value in self.macros and (self.passthru_expr_has_include or args[0].value != '__has_include'):
                                 res = self.on_unknown_macro_in_defined_expr(args[0])
                                 if res is None:
                                     ifpassthru = True
@@ -1001,7 +1059,7 @@ class Preprocessor(PreprocessorHooks):
                         ifstack.append(ifstackentry(enable,iftrigger,ifpassthru,x))
                         if enable:
                             ifpassthru = False
-                            if args[0].value in self.macros:
+                            if args[0].value in self.macros or (not self.passthru_expr_has_include and args[0].value == '__has_include'):
                                 enable = False
                                 iftrigger = False
                             else:
@@ -1173,7 +1231,7 @@ class Preprocessor(PreprocessorHooks):
     # Implementation of file-inclusion
     # ----------------------------------------------------------------------
 
-    def include(self,tokens,original_line):
+    def include(self,tokens,original_line,include_next_is_active=False,include_exists_only=False):
         """Implementation of file-inclusion"""
         # Try to extract the filename and then process an include file
         if not tokens:
@@ -1195,8 +1253,12 @@ class Preprocessor(PreprocessorHooks):
                     self.on_error(tokens[0].source,tokens[0].lineno,"Malformed #include <...>")
                     return
                 filename = "".join([x.value for x in tokens[1:i]])
-                # Search only formally specified paths
-                path = self.path
+                if not include_next_is_active:
+                    # Search only formally specified paths
+                    path = self.path
+                else:
+                    # include_next triggered this, must not differentiate
+                    path = self.temp_path + self.path
             elif tokens[0].type == self.t_STRING:
                 filename = tokens[0].value[1:-1]
                 # Search from each nested include file, as well as formally specified paths
@@ -1212,7 +1274,7 @@ class Preprocessor(PreprocessorHooks):
             for p in path:
                 iname = os.path.join(p,filename)
                 fulliname = os.path.abspath(iname)
-                if fulliname in self.include_once:
+                if not include_exists_only and fulliname in self.include_once:
                     if self.debugout is not None:
                         print("x:x:x x:x #include \"%s\" skipped as already seen" % (fulliname), file = self.debugout)
                     if self.passthru_includes is not None and self.passthru_includes.match(''.join([x.value for x in tokens])):
@@ -1221,11 +1283,20 @@ class Preprocessor(PreprocessorHooks):
                     return
                 try:
                     ih = self.on_file_open(is_system_include,fulliname)
+                    if include_exists_only:
+                        ih.close()
+                        yield True
+                        return
+                    unique_id = self.__file_unique_id(ih)
+                    if include_next_is_active and unique_id in self.current_include_next_unique_ids:
+                        ih.close()
+                        continue
                     data = ih.read()
                     ih.close()
                     dname = os.path.dirname(fulliname)
                     if dname:
                         self.temp_path.insert(0,dname)
+                    self.current_include_next_unique_ids.append(unique_id)
                     if self.passthru_includes is not None and self.passthru_includes.match(''.join([x.value for x in tokens])):
                         for tok in original_line:
                             yield tok
@@ -1234,12 +1305,16 @@ class Preprocessor(PreprocessorHooks):
                     else:
                         for tok in self.parsegen(data,filename,fulliname):
                             yield tok
+                    self.current_include_next_unique_ids.remove(unique_id)
                     if dname:
                         del self.temp_path[0]
                     return
                 except IOError:
                     pass
             else:
+                if include_exists_only:
+                    yield False
+                    return
                 p = self.on_include_not_found(False,is_system_include,self.temp_path[0] if self.temp_path else '',filename)
                 assert p is not None
                 path.append(p)
@@ -1406,7 +1481,7 @@ class Preprocessor(PreprocessorHooks):
                 blanklines += toks[0].value.count('\n')
                 continue
             # Filter out line continuations, collapsing before and after if needs be
-            for n in xrange(len(toks)-1, -1, -1):
+            for n in range(len(toks)-1, -1, -1):
                 if toks[n].type in self.t_LINECONT:
                     if n > 0 and n < len(toks) - 2 and toks[n-1].type in self.t_WS and toks[n+1].type in self.t_WS:
                         if toks[n-1].type not in self.t_LINECONT:
@@ -1427,7 +1502,7 @@ class Preprocessor(PreprocessorHooks):
             # Replace consecutive whitespace in output with a single space except at any indent
             first_ws = None
             #print(toks)
-            for n in xrange(len(toks)-1, -1, -1):
+            for n in range(len(toks)-1, -1, -1):
                 tok = toks[n]
                 if first_ws is None:
                     if tok.type in self.t_SPACE or len(tok.value) == 0:

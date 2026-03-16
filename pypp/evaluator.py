@@ -1,9 +1,7 @@
 #!/usr/bin/python
 # Python C99 conforming preprocessor expression evaluator
-# (C) 2019-2020 Niall Douglas http://www.nedproductions.biz/
+# (C) 2019-2026 Niall Douglas http://www.nedproductions.biz/
 # Started: Apr 2019
-
-from __future__ import generators, print_function, absolute_import, division
 
 import sys, os, re, codecs, copy
 if __name__ == '__main__' and __package__ is None:
@@ -13,12 +11,7 @@ from pypp.parser import STRING_TYPES, yacc, default_lexer, in_production, load_o
 # The width of signed integer which this evaluator will use
 INTMAXBITS = 64
 
-# Some Python 3 compatibility shims
-# Some Python 3 compatibility shims
-if sys.version_info.major < 3:
-    INTBASETYPE = long
-else:
-    INTBASETYPE = int
+INTBASETYPE = int
 
 # Precompile the regular expression for correctly expanding unicode escape
 # sequences in Python 2 and 3. See https://stackoverflow.com/questions/4020539/process-escape-sequences-in-a-string-in-python
@@ -107,6 +100,20 @@ class Value(INTBASETYPE):
     Value(63)
     >>> Value("'N'")
     Value(78)
+    >>> Value("L'N'")
+    Value(78)
+    >>> Value("u8'N'")
+    Value(78)
+    >>> Value("u'N'")
+    Value(78)
+    >>> Value("U'N'")
+    Value(78)
+    >>> Value("u'猫'")
+    Value(29483)
+    >>> Value("U'猫'")
+    Value(29483)
+    >>> Value("U'🍌'")
+    Value(127820)
     >>> Value("'\\n'")
     Value(10)
     >>> Value("'\\\\n'")
@@ -138,10 +145,14 @@ class Value(INTBASETYPE):
         elif isinstance(value, INTBASETYPE) or isinstance(value, int) or isinstance(value, float):
             value = cls.__uclamp(value) if unsigned else cls.__sclamp(value)
         elif isinstance(value, STRING_TYPES):
-            if (value.startswith("L'") or value[0] == "'") and value[-1] == "'":
-                startidx = 2 if value.startswith("L'") else 1
+            if (value.startswith("L'") or 
+                value.startswith("u8'") or 
+                value.startswith("u'") or 
+                value.startswith("U'") or 
+                value[0] == "'") and value[-1] == "'":
+                startidx = 3 if value.startswith("u8") else 2 if value[0] != "'" else 1
                 #print("1. ***", value, file = sys.stderr)
-                value = value[startidx:-1]
+                value = value[startidx:-1].replace("\\\n", '')
                 if len(value) == 0:
                     raise SyntaxError('Empty character escape sequence')
                 #print("2. ***", value, file = sys.stderr)
@@ -290,8 +301,6 @@ class Value(INTBASETYPE):
             return "Value(%d)" % INTBASETYPE(self)
     def __bool__(self):
         assert False  # Do not use Python logical operations
-    def __nonzero__(self):
-        assert False  # Do not use Python logical operations
     def __cmp__(self, other):
         assert False
     def __lt__(self, other):
@@ -355,7 +364,7 @@ class Value(INTBASETYPE):
 
 # The subset of tokens from Preprocessor used in preprocessor expressions
 tokens = (
-   'CPP_ID', 'CPP_INTEGER', 'CPP_CHAR', 'CPP_STRING',
+   'CPP_ID', 'PP_NUMBER', 'CPP_CHAR', 'CPP_STRING',
    'CPP_PLUS', 'CPP_MINUS', 'CPP_STAR', 'CPP_FSLASH', 'CPP_PERCENT', 'CPP_BAR',
    'CPP_AMPERSAND', 'CPP_TILDE', 'CPP_HAT', 'CPP_LESS', 'CPP_GREATER', 'CPP_EXCLAMATION',
    'CPP_QUESTION', 'CPP_LPAREN', 'CPP_RPAREN',
@@ -392,8 +401,12 @@ def p_error(p):
         raise SyntaxError("at EOF")
 
 def p_expression_number(p):
-    'expression : CPP_INTEGER'
-    p[0] = Value(p[1])
+    'expression : PP_NUMBER'
+    try:
+        p[0] = Value(p[1])
+    except:
+        p[0] = p[1]
+
 
 def p_expression_character(p):
     'expression : CPP_CHAR'

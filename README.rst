@@ -3,18 +3,18 @@ A C99 preprocessor (fork) written in pure Python
 .. role:: c(code)
    :language: c
 
-.. |travis| image:: https://github.com/ned14/pcpp/workflows/CI/badge.svg?branch=master
-    :align: middle
-    :target: https://github.com/ned14/pcpp/actions
+.. |travis| image:: https://github.com/ned14/pcpp/actions/workflows/ci.yml/badge.svg?branch=master
+     :align: middle
+     :target: https://github.com/ned14/pcpp/actions
 
 Purpose of fork - to support indentation and maybe other Python-specific things for creating
 `PWCP <https://github.com/solaluset/pwcp>`_ (Python With C Preprocessor). If there's a problem with pypp, please open an issue there.
 
-\(C) 2018-2021 Niall Douglas http://www.nedproductions.biz/ and (C) 2007-2020 David Beazley http://www.dabeaz.com/
+\(C) 2018-2026 Niall Douglas http://www.nedproductions.biz/ and (C) 2007-2020 David Beazley http://www.dabeaz.com/
 
 PyPI: https://pypi.python.org/pypi/pcpp Github: https://github.com/ned14/pcpp API reference docs: https://ned14.github.io/pcpp/
 
-Travis master branch all tests passing for Python v2, v3 and PyPy v2, v3: |travis|
+Travis master branch all tests passing for Python 3 and PyPy3: |travis|
 
 A pure universal Python C (pre-)preprocessor implementation very useful for pre-preprocessing header only
 C++ libraries into single file includes and other such build or packaging stage malarky.
@@ -23,6 +23,19 @@ or as a command line tool ``pcpp`` which
 can stand in for a conventional C preprocessor (i.e. it'll accept similar arguments).
 Works great under PyPy, and you can expect performance gains of between 0.84x and 2.62x
 (average = 2.2x, median = 2.31x).
+
+To install pcpp, you can use either pip or uv:
+
+Using pip:
+::
+
+    pip install pcpp
+
+Using uv (faster installation):
+::
+
+    uv install pcpp
+
 
 Your includes can be benchmarked for heft in order to improve your build times! See
 the ``--times`` and ``--filetimes`` options, and you can see graphs from pcpp for the
@@ -88,7 +101,6 @@ problems found in the previous Python :c:`eval()` based expression evaluator.
 A full, detailed list of known non-conformance with the C99 standard is below.
 Pull requests with bug fixes and new unit tests for the fix are welcome.
 
-If you are on Python 2, files are parsed as strings, and unicode is not supported.
 On Python 3, input and output files can have your choice of encoding, and you can
 hook file open to inspect the encoding using ``chardet``.
 
@@ -384,8 +396,59 @@ See the API reference docs at https://ned14.github.io/pcpp/
 
 You can find an example of overriding the ``on_*()`` processing hooks at https://github.com/ned14/pcpp/blob/master/pcpp/pcmd.py
 
+Running Tests
+=============
+To run the test suite for ``pcpp``, you can use either of these methods:
+
+1. Using pytest directly (recommended):
+   ::
+
+       python -m pytest tests/ -v
+
+2. Using the setup.py test command (deprecated but still functional):
+   ::
+
+       python setup.py test
+
+The test suite includes various test cases covering C99 preprocessor functionality,
+edge cases, and compatibility with the C11 standard preprocessor torture samples.
+
+
 History:
 ========
+v1.31 (?):
+----------
+- Remove Python 2 support completely; pcpp is now Python 3 only
+  (issue #87).
+- Replace setuptools test suite with pytest as the test runner.
+- Add ``uv`` support for faster dependency installation.
+- Rearrange ``main()`` function logic to avoid code duplication and make the
+  entry point cleaner (PR #73). Thanks to assarbad for this improvement.
+- Fix issue #79 by replacing ``CPP_INTEGER`` and ``CPP_FLOAT`` tokens with a
+  ``PP_NUMBER`` token for better preprocessing compliance. Update ``PP_NUMBER``
+  regex definition to properly handle digit separators in numeric literals.
+  Add new test file for issue0079. Thanks to willwray for the PR implementing
+  these features.
+- Add support for ``#include_next``, though note it is gated behind the
+``--enable-include-next`` command line option. Thanks to Dudeldu for the original
+PR #98.
+- Multi line and unicode character literals were not working by pure oversight.
+Fixed and thanks to geky for showing the issue in PR #103.
+- Add support for ``__has_include``, a long requested and oft requested
+feature (#53, #77, #97).
+- Disable the processing of trigraphs by default to match other C preprocessors.
+Now pass ``--trigraphs`` to enable them. Thanks to pmp-p for suggesting this #100.
+- Believe it or not, until now this caused an infinite loop:
+
+```
+#define FOO(x) x
+#define BAR FOO(BAR)
+BAR
+```
+
+This is fixed, which closes #72, #101 and possibly quite a few more open issues.
+Thanks to MatthewShao for originally reporting this.
+
 v1.30 (29th October 2021):
 --------------------------
 - Thanks to a 5km limit covid lockdown in my country, a public holiday where we were
