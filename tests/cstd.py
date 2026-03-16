@@ -4,12 +4,14 @@ from io import StringIO
 clock = time.process_time
 
 class runner(object):
+    fix_indentation = True
+
     def runTest(self):
         from pypp import Preprocessor
         import os, sys
 
         start = clock()
-        p = Preprocessor()
+        p = Preprocessor(fix_indentation=self.fix_indentation)
         p.parse(self.input)
         oh = StringIO()
         p.write(oh)
@@ -575,6 +577,8 @@ BAR
 """
 
 class test31(unittest.TestCase, runner):
+    fix_indentation = False
+
     input = r"""
 #define PCRE2_SIZE            size_t
 
