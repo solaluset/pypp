@@ -4,7 +4,7 @@ from io import StringIO
 
 class runner(object):
     def runTest(self):
-        from pcpp import Preprocessor
+        from pypp import Preprocessor
         p = Preprocessor()
         p.parse(self.input)        
         output = StringIO()

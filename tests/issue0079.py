@@ -3,7 +3,7 @@ from io import StringIO
 
 class runner(object):
     def runTest(self):
-        from pcpp import Preprocessor, OutputDirective, Action
+        from pypp import Preprocessor, OutputDirective, Action
         import os, sys, re
 
         p = Preprocessor()
