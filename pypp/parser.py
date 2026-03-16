@@ -182,6 +182,39 @@ def load_or_create(factory, filename, factory_args=(), factory_kwargs={}):
 def default_lexer():
     return load_or_create(lex.lex, "lex.pickle")
 
+# -----------------------------------------------------------------------------
+# trigraph()
+#
+# Given an input string, this function replaces all trigraph sequences. 
+# The following mapping is used:
+#
+#     ??=    #
+#     ??/    \
+#     ??'    ^
+#     ??(    [
+#     ??)    ]
+#     ??!    |
+#     ??<    {
+#     ??>    }
+#     ??-    ~
+# -----------------------------------------------------------------------------
+
+_trigraph_pat = re.compile(r'''\?\?[=/\'\(\)\!<>\-]''')
+_trigraph_rep = {
+    '=': '#',
+    '/': '\\',
+    "'": '^',
+    '(': '[',
+    ')': ']',
+    '!': '|',
+    '<': '{',
+    '>': '}',
+    '-': '~',
+}
+
+def trigraph(input):
+    return _trigraph_pat.sub(lambda g: _trigraph_rep[g.group()[-1]], input)
+
 # ------------------------------------------------------------------
 # Macro object
 #

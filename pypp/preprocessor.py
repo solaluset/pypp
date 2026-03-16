@@ -12,7 +12,7 @@
 import sys, os, re, codecs, time, copy, traceback
 if __name__ == '__main__' and __package__ is None:
     sys.path.append( os.path.dirname( os.path.dirname( os.path.abspath(__file__) ) ) )
-from pypp.parser import STRING_TYPES, default_lexer, Macro, Action, OutputDirective, PreprocessorHooks
+from pypp.parser import STRING_TYPES, default_lexer, trigraph, Macro, Action, OutputDirective, PreprocessorHooks
 from pypp.evaluator import Evaluator
 
 import io
