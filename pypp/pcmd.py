@@ -21,7 +21,12 @@ class FileAction(argparse.Action):
             items = []
         else:
             items = copy.copy(getattr(namespace, self.dest))
-        items += [sys.stdin if value == "-" else open(value, "rt") for value in values]
+        for value in values:
+            if value == "-":
+                value = sys.stdin
+            elif isinstance(value, str):
+                value = open(value, "rt")
+            items.append(value)
         setattr(namespace, self.dest, items)
 
 class CmdPreprocessor(Preprocessor):
