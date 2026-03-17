@@ -430,14 +430,14 @@ v1.31 (?):
   Add new test file for issue0079. Thanks to willwray for the PR implementing
   these features.
 - Add support for ``#include_next``, though note it is gated behind the
-``--enable-include-next`` command line option. Thanks to Dudeldu for the original
-PR #98.
+  ``--enable-include-next`` command line option. Thanks to Dudeldu for the original
+  PR #98.
 - Multi line and unicode character literals were not working by pure oversight.
-Fixed and thanks to geky for showing the issue in PR #103.
+  Fixed and thanks to geky for showing the issue in PR #103.
 - Add support for ``__has_include``, a long requested and oft requested
-feature (#53, #77, #97).
+  feature (#53, #77, #97).
 - Disable the processing of trigraphs by default to match other C preprocessors.
-Now pass ``--trigraphs`` to enable them. Thanks to pmp-p for suggesting this #100.
+  Now pass ``--trigraphs`` to enable them. Thanks to pmp-p for suggesting this #100.
 - Believe it or not, until now this caused an infinite loop:
 
 ```
